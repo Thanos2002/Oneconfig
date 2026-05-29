@@ -1,0 +1,28 @@
+# OneConfig — Node.js API Template
+# Stack: Node.js + Express/Fastify
+
+project_name: my-node-api
+
+runtimes:
+  - name: node
+    version: "20.x"
+
+package_managers:
+  - type: npm
+    path: .
+
+env_vars:
+  NODE_ENV: development
+  PORT: "3000"
+
+services:
+  - name: api
+    start_command: npm run dev
+    port: 3000
+    health_check:
+      type: http
+      target: http://localhost:3000/health
+      timeout: 30s
+
+post_start_commands:
+  - echo "🚀 API running at http://localhost:3000"

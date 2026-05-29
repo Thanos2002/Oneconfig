@@ -1,0 +1,15 @@
+# OneConfig — Self-hosting example
+# This project uses itself to set up its own development environment.
+
+project_name: oneconfig
+
+runtimes: []
+
+package_managers: []
+
+env_vars: {}
+
+post_start_commands:
+  - echo "🚀 OneConfig development environment ready!"
+  - echo "   Run 'go test ./...' to execute tests"
+  - echo "   Run 'go build -o oneconfig .' to build the binary"

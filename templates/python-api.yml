@@ -1,0 +1,29 @@
+# OneConfig — Python API Template
+# Stack: Python + FastAPI/Flask
+
+project_name: my-python-api
+
+runtimes:
+  - name: python
+    version: "3.11"
+
+package_managers:
+  - type: pip
+    path: .
+
+env_vars:
+  PYTHONPATH: .
+  FLASK_ENV: development
+  PORT: "8000"
+
+services:
+  - name: api
+    start_command: uvicorn main:app --reload --port 8000
+    port: 8000
+    health_check:
+      type: http
+      target: http://localhost:8000/health
+      timeout: 30s
+
+post_start_commands:
+  - echo "🚀 API running at http://localhost:8000"

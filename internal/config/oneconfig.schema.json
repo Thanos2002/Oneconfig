@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oneconfig.dev/schema/v1",
+  "title": "OneConfig Configuration",
+  "description": "Schema for oneconfig.yml — a single config file that defines a repository's local development environment.",
+  "type": "object",
+  "required": ["project_name"],
+  "additionalProperties": false,
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "description": "Human-readable name for this project.",
+      "minLength": 1
+    },
+    "runtimes": {
+      "type": "array",
+      "description": "Language runtimes required by the project.",
+      "items": {
+        "type": "object",
+        "required": ["name", "version"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": ["node", "python"],
+            "description": "Runtime identifier."
+          },
+          "version": {
+            "type": "string",
+            "description": "Semver or semver range (e.g. '20.x', '3.11')."
+          }
+        }
+      }
+    },
+    "package_managers": {
+      "type": "array",
+      "description": "Package managers to run during setup.",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["npm", "yarn", "pnpm", "pip", "poetry", "uv"],
+            "description": "Package manager to use."
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative path to the directory containing the manifest file. Defaults to project root.",
+            "default": "."
+          },
+          "install_command": {
+            "type": "string",
+            "description": "Override the default install command (e.g. 'npm ci' instead of 'npm install')."
+          }
+        }
+      }
+    },
+    "env_vars": {
+      "type": "object",
+      "description": "Environment variables to set. Keys are variable names, values are literal strings or objects with 'file' key to merge from a template file.",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string",
+                "description": "Path to a file whose KEY=VALUE lines will be merged."
+              }
+            },
+            "required": ["file"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "services": {
+      "type": "array",
+      "description": "Local services to start as part of the development environment.",
+      "items": {
+        "$ref": "#/$defs/service"
+      }
+    },
+    "setup_steps": {
+      "type": "array",
+      "description": "Commands to run during setup (e.g. migrations, seed data).",
+      "items": {
+        "type": "object",
+        "required": ["name", "command"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable label for this step."
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command to execute."
+          },
+          "depends_on": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Names of services or setup steps that must complete before this step runs.",
+            "default": []
+          },
+          "working_dir": {
+            "type": "string",
+            "description": "Relative directory to run the command in. Defaults to project root.",
+            "default": "."
+          }
+        }
+      }
+    },
+    "health_checks": {
+      "type": "array",
+      "description": "Final health checks to confirm the environment is ready.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable label for the check."
+          },
+          "url": {
+            "type": "string",
+            "description": "HTTP URL to GET; expects 2xx."
+          },
+          "port": {
+            "type": "integer",
+            "description": "TCP port to dial."
+          },
+          "command": {
+            "type": "string",
+            "description": "Shell command; expects exit 0."
+          },
+          "timeout": {
+            "type": "string",
+            "description": "Max wait time (e.g. '30s', '2m'). Default: 30s.",
+            "default": "30s"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Retry interval (e.g. '2s'). Default: 2s.",
+            "default": "2s"
+          }
+        },
+        "oneOf": [
+          { "required": ["url"] },
+          { "required": ["port"] },
+          { "required": ["command"] }
+        ]
+      }
+    },
+    "post_start_commands": {
+      "type": "array",
+      "description": "Commands to run after all services are healthy.",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "service": {
+      "type": "object",
+      "required": ["name", "start_command"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Unique service identifier."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["process", "docker", "script"],
+          "description": "How the service is started. Default: 'process'.",
+          "default": "process"
+        },
+        "start_command": {
+          "type": "string",
+          "description": "Command to start the service."
+        },
+        "stop_command": {
+          "type": "string",
+          "description": "Optional command to gracefully stop the service."
+        },
+        "port": {
+          "type": "integer",
+          "description": "Port the service listens on."
+        },
+        "health_check": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["http", "tcp", "cmd"],
+              "description": "Health check strategy."
+            },
+            "target": {
+              "type": "string",
+              "description": "URL, port, or command depending on type."
+            },
+            "timeout": {
+              "type": "string",
+              "description": "Max wait time. Default: 30s.",
+              "default": "30s"
+            },
+            "interval": {
+              "type": "string",
+              "description": "Retry interval. Default: 2s.",
+              "default": "2s"
+            }
+          },
+          "required": ["type"]
+        },
+        "depends_on": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Names of services that must be healthy before this one starts.",
+          "default": []
+        },
+        "working_dir": {
+          "type": "string",
+          "description": "Relative directory to start the service in.",
+          "default": "."
+        },
+        "env": {
+          "type": "object",
+          "description": "Additional environment variables for this service only.",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}

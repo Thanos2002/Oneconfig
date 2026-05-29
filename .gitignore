@@ -1,0 +1,22 @@
+# Binaries
+oneconfig
+oneconfig.exe
+
+# Build output
+dist/
+
+# OneConfig state
+.oneconfig/
+
+# Environment files
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db

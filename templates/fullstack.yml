@@ -1,0 +1,69 @@
+# OneConfig — Fullstack Template
+# Stack: Node.js frontend + Python backend + PostgreSQL
+
+project_name: my-fullstack-app
+
+runtimes:
+  - name: node
+    version: "20.x"
+  - name: python
+    version: "3.11"
+
+package_managers:
+  - type: npm
+    path: ./frontend
+  - type: pip
+    path: ./backend
+
+env_vars:
+  NODE_ENV: development
+  DATABASE_URL: postgres://postgres:dev@localhost:5432/myapp
+  API_URL: http://localhost:8000
+
+services:
+  - name: postgres
+    type: docker
+    start_command: docker run --rm -p 5432:5432 -e POSTGRES_PASSWORD=dev -e POSTGRES_DB=myapp postgres:15
+    port: 5432
+    health_check:
+      type: tcp
+      target: ":5432"
+      timeout: 30s
+
+  - name: backend
+    start_command: cd backend && uvicorn main:app --reload --port 8000
+    port: 8000
+    health_check:
+      type: http
+      target: http://localhost:8000/health
+      timeout: 30s
+    depends_on: [postgres]
+
+  - name: frontend
+    start_command: cd frontend && npm run dev
+    port: 3000
+    health_check:
+      type: http
+      target: http://localhost:3000
+      timeout: 60s
+    depends_on: [backend]
+
+setup_steps:
+  - name: migrate
+    command: cd backend && python manage.py migrate
+    depends_on: [postgres]
+
+  - name: seed
+    command: cd backend && python manage.py seed
+    depends_on: [migrate]
+
+health_checks:
+  - name: full-stack
+    url: http://localhost:3000
+    timeout: 90s
+
+post_start_commands:
+  - echo "🚀 Fullstack app ready!"
+  - echo "   Frontend: http://localhost:3000"
+  - echo "   Backend:  http://localhost:8000"
+  - echo "   Database: postgres://localhost:5432/myapp"

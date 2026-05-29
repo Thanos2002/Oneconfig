@@ -1,0 +1,28 @@
+# OneConfig — Next.js Template
+# Stack: Node.js + Next.js
+
+project_name: my-nextjs-app
+
+runtimes:
+  - name: node
+    version: "20.x"
+
+package_managers:
+  - type: npm
+    path: .
+
+env_vars:
+  NODE_ENV: development
+  NEXT_PUBLIC_API_URL: http://localhost:3000/api
+
+services:
+  - name: nextjs
+    start_command: npm run dev
+    port: 3000
+    health_check:
+      type: http
+      target: http://localhost:3000
+      timeout: 60s
+
+post_start_commands:
+  - echo "🚀 Next.js running at http://localhost:3000"
