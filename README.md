@@ -7,14 +7,18 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Built_with-Go-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 
+<br/>
 
-> oneconfig generate   →   scans your project, builds a config
-
-> oneconfig up         →   installs everything, starts all services
-
+```
+oneconfig generate   →   scans your project, builds a config
+oneconfig up         →   installs everything, starts all services
+```
 
 **That's it. No Dockerfiles to write. No READMEs to follow. No "works on my machine."**
 
+<br/>
+
+</div>
 
 ---
 
