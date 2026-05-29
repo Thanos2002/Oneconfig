@@ -1,10 +1,10 @@
-# 🚀 OneConfig
+# <div align="center">🚀 OneConfig</div>
 
-**Set up any dev environment with one command.**
+**<div align="center">Set up any dev environment with one command.</div>**
 
-OneConfig reads a single `oneconfig.yml` file at the root of your repository and provisions a fully working local development environment. No more reading READMEs, installing mismatched tool versions, or starting services manually.
+OneConfig provisions a fully working local development environment with zero manual setup. If you don't have a configuration file, it automatically deep-scans your repository to build one from scratch. Once generated, it reads it and installs tool versions, configure databases, and start services. No more reading 50-line READMEs!
 
-> ✨ **New in v1.0**: OneConfig now features a **Universal Detection Engine**. Run `oneconfig generate` to automatically scan your repository and build a perfect environment configuration—no manual writing required!
+> **Universal Detection Engine**: Run `oneconfig generate` in a project, and OneConfig will automatically infer your frameworks, runtimes, package managers, and databases—no manual writing required!
 
 ```bash
 git clone https://github.com/Thanos2002/Oneconfig.git
