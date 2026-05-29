@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Built_with-Go-00ADD8?logo=go&logoColor=white)](https://go.dev/)
-
+</div>
 <br/>
 
 ```
@@ -18,7 +18,7 @@ oneconfig up         →   installs everything, starts all services
 
 <br/>
 
-</div>
+
 
 ---
 
