@@ -2,7 +2,7 @@
 
 **<div align="center">Set up any dev environment with one command.</div>**
 
-OneConfig provisions a fully working local development environment with zero manual setup. If you don't have a configuration file, it automatically deep-scans your repository to build one from scratch. Once generated, it reads it and installs tool versions, configure databases, and start services. No more reading 50-line READMEs!
+OneConfig provisions a fully working local development environment with zero manual setup. If you don't have a configuration file, it automatically deep-scans your repository to build one from scratch. Once generated, it reads it and installs tool versions, configure databases, and start services. No more reading long READMEs like what you do right now!
 
 > **Universal Detection Engine**: Run `oneconfig generate` in a project, and OneConfig will automatically infer your frameworks, runtimes, package managers, and databases—no manual writing required!
 
