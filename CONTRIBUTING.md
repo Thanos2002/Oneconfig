@@ -6,18 +6,18 @@ First off, thank you for considering contributing to OneConfig! It's people like
 
 ### Adding a New Detector
 
-OneConfig uses a highly extensible detector engine located in `internal/generate/`. If you want to add support for a new language, framework, or package manager, you can do so by creating or modifying a detector!
+OneConfig uses a highly extensible detector engine located in `internal/generate/`. Each technology has its own file (e.g. `detector_node.go`, `detector_python.go`, `detector_go.go`). If you want to add support for a new language, framework, or package manager, you can do so by creating or modifying a detector!
 
-1. Look in `internal/generate/detectors.go` and `internal/generate/detectors_extended.go`.
-2. Check if your ecosystem (e.g. Node.js, Python, Rust, Go, Java, Ruby) already has a detector.
-3. If it does, simply extend the logic (for example, adding support for a new lockfile like `bun.lock` or a new framework like `Gradio`).
-4. If it's a completely new ecosystem, implement the `Detector` interface:
+1. Browse the existing `detector_*.go` files in `internal/generate/` to see how current detectors work.
+2. Check if your ecosystem (e.g. Node.js, Python, Rust, Go, Java, Ruby) already has a detector file.
+3. If it does, simply extend the logic in that file (for example, adding support for a new lockfile like `bun.lock` or a new framework like `Gradio`).
+4. If it's a completely new ecosystem, create a new `detector_<name>.go` file and implement the `Detector` interface (defined in `internal/generate/scanner.go`):
    ```go
    type Detector interface {
        Detect(projectDir string, result *ScanResult) error
    }
    ```
-5. Register your new detector in `internal/generate/scanner.go`.
+5. Register your new detector in the `NewScanner()` function in `internal/generate/scanner.go`.
 
 ### Development Workflow
 
