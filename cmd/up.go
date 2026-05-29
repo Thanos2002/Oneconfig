@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/oneconfig/oneconfig/internal/config"
-	"github.com/oneconfig/oneconfig/internal/envvar"
-	"github.com/oneconfig/oneconfig/internal/health"
-	"github.com/oneconfig/oneconfig/internal/orchestrator"
-	"github.com/oneconfig/oneconfig/internal/pkgmanager"
-	"github.com/oneconfig/oneconfig/internal/runtime"
-	"github.com/oneconfig/oneconfig/internal/services"
-	"github.com/oneconfig/oneconfig/internal/ui"
+	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/envvar"
+	"github.com/Thanos2002/Oneconfig/internal/health"
+	"github.com/Thanos2002/Oneconfig/internal/orchestrator"
+	"github.com/Thanos2002/Oneconfig/internal/pkgmanager"
+	"github.com/Thanos2002/Oneconfig/internal/runtime"
+	"github.com/Thanos2002/Oneconfig/internal/services"
+	"github.com/Thanos2002/Oneconfig/internal/ui"
 	"github.com/spf13/cobra"
 )
 

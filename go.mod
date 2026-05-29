@@ -1,4 +1,4 @@
-module github.com/oneconfig/oneconfig
+module github.com/Thanos2002/Oneconfig
 
 go 1.26.3
 

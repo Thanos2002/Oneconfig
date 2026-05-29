@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/oneconfig/oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/config"
 )
 
 // Check performs a single health check as defined in the config.

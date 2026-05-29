@@ -5,7 +5,7 @@ package generate
 import (
 	"path/filepath"
 
-	"github.com/oneconfig/oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/config"
 )
 
 // Scanner analyzes a project directory to detect its technology stack.

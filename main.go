@@ -1,6 +1,6 @@
 package main
 
-import "github.com/oneconfig/oneconfig/cmd"
+import "github.com/Thanos2002/Oneconfig/cmd"
 
 func main() {
 	cmd.Execute()

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/oneconfig/oneconfig/internal/ui"
+	"github.com/Thanos2002/Oneconfig/internal/ui"
 	"github.com/spf13/cobra"
 )
 

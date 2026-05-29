@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/oneconfig/oneconfig/internal/config"
-	"github.com/oneconfig/oneconfig/internal/ui"
+	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/ui"
 )
 
 // Engine executes setup steps in dependency order with optional parallelism.

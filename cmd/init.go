@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/oneconfig/oneconfig/internal/config"
-	"github.com/oneconfig/oneconfig/internal/ui"
+	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/ui"
 	"github.com/spf13/cobra"
 )
 

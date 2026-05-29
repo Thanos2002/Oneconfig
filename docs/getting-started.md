@@ -18,7 +18,7 @@ winget install oneconfig
 
 **From Source (requires Go 1.26+):**
 ```bash
-go install github.com/oneconfig/oneconfig@latest
+go install github.com/Thanos2002/Oneconfig@latest
 ```
 
 Verify your installation:

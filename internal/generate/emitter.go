@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/oneconfig/oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/config"
 	"gopkg.in/yaml.v3"
 )
 

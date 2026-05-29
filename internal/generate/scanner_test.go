@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/oneconfig/oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/config"
 )
 
 // helper to create a file within a temp directory

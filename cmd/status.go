@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/oneconfig/oneconfig/internal/config"
-	"github.com/oneconfig/oneconfig/internal/services"
-	"github.com/oneconfig/oneconfig/internal/ui"
+	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/services"
+	"github.com/Thanos2002/Oneconfig/internal/ui"
 	"github.com/spf13/cobra"
 )
 

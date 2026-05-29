@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/oneconfig/oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/config"
 )
 
 // Runner executes package manager install commands.
