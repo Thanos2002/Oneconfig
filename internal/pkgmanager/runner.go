@@ -2,6 +2,7 @@
 package pkgmanager
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,7 +23,7 @@ func NewRunner(projectDir string, verbose bool) *Runner {
 }
 
 // Install runs the appropriate install command for the given package manager config.
-func (r *Runner) Install(pm config.PackageManager) error {
+func (r *Runner) Install(ctx context.Context, pm config.PackageManager) error {
 	dir := filepath.Join(r.projectDir, pm.Path)
 
 	// Verify the directory exists
@@ -41,7 +42,7 @@ func (r *Runner) Install(pm config.PackageManager) error {
 	}
 
 	// Run the command
-	cmd := shell.Command(command)
+	cmd := shell.CommandContext(ctx, command)
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "CI=true") // suppress interactive prompts
 

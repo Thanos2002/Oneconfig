@@ -3,6 +3,7 @@
 package runtime
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -22,21 +23,21 @@ func NewManager(verbose bool) *Manager {
 
 // Ensure checks if the required runtime version is available, and attempts
 // to install or switch to it if not.
-func (m *Manager) Ensure(name, version string) error {
+func (m *Manager) Ensure(ctx context.Context, name, version string) error {
 	switch name {
 	case "node":
-		return m.ensureNode(version)
+		return m.ensureNode(ctx, version)
 	case "python":
-		return m.ensurePython(version)
+		return m.ensurePython(ctx, version)
 	default:
 		return fmt.Errorf("unsupported runtime: %s (supported: node, python)", name)
 	}
 }
 
 // ensureNode checks for Node.js and tries to install the right version.
-func (m *Manager) ensureNode(version string) error {
+func (m *Manager) ensureNode(ctx context.Context, version string) error {
 	// Check if node is already available
-	currentVersion, err := m.getVersion("node", "--version")
+	currentVersion, err := m.getVersion(ctx, "node", "--version")
 	if err == nil && matchesVersion(currentVersion, version) {
 		return nil
 	}
@@ -55,7 +56,7 @@ func (m *Manager) ensureNode(version string) error {
 	for _, mgr := range managers {
 		if _, err := exec.LookPath(mgr.check); err == nil {
 			// Version manager found — use it
-			cmd := shell.Command(mgr.install)
+			cmd := shell.CommandContext(ctx, mgr.install)
 			if output, err := cmd.CombinedOutput(); err != nil {
 				if m.verbose {
 					fmt.Printf("  [%s] %s\n", mgr.name, string(output))
@@ -81,10 +82,10 @@ func (m *Manager) ensureNode(version string) error {
 }
 
 // ensurePython checks for Python and tries to install the right version.
-func (m *Manager) ensurePython(version string) error {
+func (m *Manager) ensurePython(ctx context.Context, version string) error {
 	// Check python3 first, then python
 	for _, bin := range []string{"python3", "python"} {
-		currentVersion, err := m.getVersion(bin, "--version")
+		currentVersion, err := m.getVersion(ctx, bin, "--version")
 		if err == nil && matchesVersion(currentVersion, version) {
 			return nil
 		}
@@ -92,7 +93,7 @@ func (m *Manager) ensurePython(version string) error {
 
 	// Try pyenv
 	if _, err := exec.LookPath("pyenv"); err == nil {
-		cmd := shell.Command(fmt.Sprintf("pyenv install -s %s && pyenv local %s", version, version))
+		cmd := shell.CommandContext(ctx, fmt.Sprintf("pyenv install -s %s && pyenv local %s", version, version))
 		if _, err := cmd.CombinedOutput(); err == nil {
 			return nil
 		}
@@ -105,8 +106,8 @@ func (m *Manager) ensurePython(version string) error {
 }
 
 // getVersion runs a command to get the installed version string.
-func (m *Manager) getVersion(binary string, args ...string) (string, error) {
-	cmd := exec.Command(binary, args...)
+func (m *Manager) getVersion(ctx context.Context, binary string, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, binary, args...)
 	output, err := cmd.Output()
 	if err != nil {
 		return "", err

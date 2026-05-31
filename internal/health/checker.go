@@ -3,6 +3,7 @@
 package health
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 )
 
 // Check performs a single health check as defined in the config.
-func Check(hc config.HealthCheck) error {
+func Check(ctx context.Context, hc config.HealthCheck) error {
 	timeout, err := config.ParseDuration(hc.Timeout)
 	if err != nil {
 		timeout = 30 * time.Second
@@ -26,15 +27,19 @@ func Check(hc config.HealthCheck) error {
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
 		var checkErr error
 
 		switch {
 		case hc.URL != "":
-			checkErr = checkHTTP(hc.URL)
+			checkErr = checkHTTP(ctx, hc.URL)
 		case hc.Port != 0:
-			checkErr = checkTCP(hc.Port)
+			checkErr = checkTCP(ctx, hc.Port)
 		case hc.Command != "":
-			checkErr = checkCommand(hc.Command)
+			checkErr = checkCommand(ctx, hc.Command)
 		default:
 			return fmt.Errorf("health check has no target (url, port, or command)")
 		}
@@ -43,14 +48,18 @@ func Check(hc config.HealthCheck) error {
 			return nil
 		}
 
-		time.Sleep(interval)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(interval):
+		}
 	}
 
 	return fmt.Errorf("health check timed out after %s", timeout)
 }
 
 // WaitForService waits until a service's health check passes.
-func WaitForService(svc config.Service) error {
+func WaitForService(ctx context.Context, svc config.Service) error {
 	if svc.HealthCheck == nil {
 		return nil
 	}
@@ -68,19 +77,23 @@ func WaitForService(svc config.Service) error {
 	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
 		var checkErr error
 
 		switch hc.Type {
 		case "http":
-			checkErr = checkHTTP(hc.Target)
+			checkErr = checkHTTP(ctx, hc.Target)
 		case "tcp":
 			if svc.Port > 0 && hc.Target == "" {
-				checkErr = checkTCP(svc.Port)
+				checkErr = checkTCP(ctx, svc.Port)
 			} else {
-				checkErr = checkTCPAddr(hc.Target)
+				checkErr = checkTCPAddr(ctx, hc.Target)
 			}
 		case "cmd":
-			checkErr = checkCommand(hc.Target)
+			checkErr = checkCommand(ctx, hc.Target)
 		default:
 			return fmt.Errorf("unknown health check type: %s (expected: http, tcp, cmd)", hc.Type)
 		}
@@ -89,7 +102,11 @@ func WaitForService(svc config.Service) error {
 			return nil
 		}
 
-		time.Sleep(interval)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(interval):
+		}
 	}
 
 	return fmt.Errorf(
@@ -99,9 +116,13 @@ func WaitForService(svc config.Service) error {
 }
 
 // checkHTTP performs an HTTP GET and expects a 2xx response.
-func checkHTTP(url string) error {
+func checkHTTP(ctx context.Context, url string) error {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return err
+	}
 	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -114,13 +135,15 @@ func checkHTTP(url string) error {
 }
 
 // checkTCP attempts to dial a TCP port on localhost.
-func checkTCP(port int) error {
-	return checkTCPAddr(fmt.Sprintf("localhost:%d", port))
+func checkTCP(ctx context.Context, port int) error {
+	return checkTCPAddr(ctx, fmt.Sprintf("localhost:%d", port))
 }
 
 // checkTCPAddr attempts to dial a TCP address.
-func checkTCPAddr(addr string) error {
-	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
+func checkTCPAddr(ctx context.Context, addr string) error {
+	var d net.Dialer
+	d.Timeout = 2 * time.Second
+	conn, err := d.DialContext(ctx, "tcp", addr)
 	if err != nil {
 		return err
 	}
@@ -129,6 +152,6 @@ func checkTCPAddr(addr string) error {
 }
 
 // checkCommand runs a shell command and expects exit code 0.
-func checkCommand(command string) error {
-	return shell.Command(command).Run()
+func checkCommand(ctx context.Context, command string) error {
+	return shell.CommandContext(ctx, command).Run()
 }

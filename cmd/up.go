@@ -66,8 +66,11 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 		ui.Header("Installing runtimes")
 		rm := runtime.NewManager(verbose)
 		for _, rt := range cfg.Runtimes {
+			if cmd.Context().Err() != nil {
+				return cmd.Context().Err()
+			}
 			spinner, _ := ui.Spinner(fmt.Sprintf("Setting up %s %s", rt.Name, rt.Version))
-			if err := rm.Ensure(rt.Name, rt.Version); err != nil {
+			if err := rm.Ensure(cmd.Context(), rt.Name, rt.Version); err != nil {
 				if spinner != nil {
 					spinner.Fail(fmt.Sprintf("Failed to set up %s %s", rt.Name, rt.Version))
 				}
@@ -84,8 +87,11 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 		ui.Header("Installing dependencies")
 		pm := pkgmanager.NewRunner(dir, verbose)
 		for _, pkg := range cfg.PackageManagers {
+			if cmd.Context().Err() != nil {
+				return cmd.Context().Err()
+			}
 			spinner, _ := ui.Spinner(fmt.Sprintf("Running %s install in %s", pkg.Type, pkg.Path))
-			if err := pm.Install(pkg); err != nil {
+			if err := pm.Install(cmd.Context(), pkg); err != nil {
 				if spinner != nil {
 					spinner.Fail(fmt.Sprintf("%s install failed in %s", pkg.Type, pkg.Path))
 				}
@@ -99,6 +105,9 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 
 	// Step 4: Set environment variables (FR-6)
 	if len(cfg.EnvVars) > 0 {
+		if cmd.Context().Err() != nil {
+			return cmd.Context().Err()
+		}
 		ui.Header("Configuring environment variables")
 		ew := envvar.NewWriter(dir)
 		if err := ew.Write(cfg.EnvVars); err != nil {
@@ -132,6 +141,9 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 		}
 
 		for _, svc := range order {
+			if cmd.Context().Err() != nil {
+				return cmd.Context().Err()
+			}
 			spinner, _ := ui.Spinner(fmt.Sprintf("Starting %s", svc.Name))
 			if err := svcMgr.Start(svc); err != nil {
 				if spinner != nil {
@@ -142,7 +154,7 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 
 			// Wait for service health check (FR-10)
 			if svc.HealthCheck != nil {
-				if err := health.WaitForService(svc); err != nil {
+				if err := health.WaitForService(cmd.Context(), svc); err != nil {
 					if spinner != nil {
 						spinner.Fail(fmt.Sprintf("%s is not healthy", svc.Name))
 					}
@@ -158,9 +170,12 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 
 	// Step 6: Run setup steps (FR-8, FR-9)
 	if len(cfg.SetupSteps) > 0 {
+		if cmd.Context().Err() != nil {
+			return cmd.Context().Err()
+		}
 		ui.Header("Running setup steps")
 		orch := orchestrator.NewEngine(dir, verbose)
-		if err := orch.RunSteps(cfg.SetupSteps); err != nil {
+		if err := orch.RunSteps(cmd.Context(), cfg.SetupSteps); err != nil {
 			return fmt.Errorf("setup steps: %w", err)
 		}
 	}
@@ -169,8 +184,11 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 	if len(cfg.HealthChecks) > 0 {
 		ui.Header("Verifying environment health")
 		for _, hc := range cfg.HealthChecks {
+			if cmd.Context().Err() != nil {
+				return cmd.Context().Err()
+			}
 			spinner, _ := ui.Spinner(fmt.Sprintf("Checking %s", hc.Name))
-			if err := health.Check(hc); err != nil {
+			if err := health.Check(cmd.Context(), hc); err != nil {
 				if spinner != nil {
 					spinner.Fail(fmt.Sprintf("%s health check failed", hc.Name))
 				}
@@ -186,9 +204,12 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 	if len(cfg.PostStartCommands) > 0 {
 		ui.Header("Running post-start commands")
 		orch := orchestrator.NewEngine(dir, verbose)
-		for _, cmd := range cfg.PostStartCommands {
-			if err := orch.RunCommand(cmd, dir); err != nil {
-				ui.Warning(fmt.Sprintf("Post-start command failed: %s", cmd))
+		for _, postCmd := range cfg.PostStartCommands {
+			if cmd.Context().Err() != nil {
+				return cmd.Context().Err()
+			}
+			if err := orch.RunCommand(cmd.Context(), postCmd, dir); err != nil {
+				ui.Warning(fmt.Sprintf("Post-start command failed: %s", postCmd))
 			}
 		}
 	}

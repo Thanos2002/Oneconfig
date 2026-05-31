@@ -3,6 +3,7 @@
 package orchestrator
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -25,7 +26,7 @@ func NewEngine(projectDir string, verbose bool) *Engine {
 }
 
 // RunSteps executes setup steps in topological order, parallelizing independent steps.
-func (e *Engine) RunSteps(steps []config.SetupStep) error {
+func (e *Engine) RunSteps(ctx context.Context, steps []config.SetupStep) error {
 	// Build dependency graph
 	order, layers, err := topologicalSort(steps)
 	if err != nil {
@@ -42,7 +43,7 @@ func (e *Engine) RunSteps(steps []config.SetupStep) error {
 			// Single step — run sequentially
 			step := layer[0]
 			ui.Step(fmt.Sprintf("Running: %s", step.Name))
-			if err := e.RunCommand(step.Command, filepath.Join(e.projectDir, step.WorkingDir)); err != nil {
+			if err := e.RunCommand(ctx, step.Command, filepath.Join(e.projectDir, step.WorkingDir)); err != nil {
 				return fmt.Errorf("step %q failed: %w", step.Name, err)
 			}
 			ui.Success(step.Name)
@@ -56,7 +57,7 @@ func (e *Engine) RunSteps(steps []config.SetupStep) error {
 				wg.Add(1)
 				go func(s config.SetupStep) {
 					defer wg.Done()
-					if err := e.RunCommand(s.Command, filepath.Join(e.projectDir, s.WorkingDir)); err != nil {
+					if err := e.RunCommand(ctx, s.Command, filepath.Join(e.projectDir, s.WorkingDir)); err != nil {
 						errCh <- fmt.Errorf("step %q failed: %w", s.Name, err)
 					} else {
 						ui.Success(s.Name)
@@ -78,14 +79,15 @@ func (e *Engine) RunSteps(steps []config.SetupStep) error {
 }
 
 // RunCommand executes a single shell command in the given directory.
-func (e *Engine) RunCommand(command, dir string) error {
-	cmd := shell.Command(command)
+func (e *Engine) RunCommand(ctx context.Context, command, dir string) error {
+	cmd := shell.CommandContext(ctx, command)
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
 
 	if e.verbose {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		return cmd.Run()
 	} else {
 		// Capture output for error reporting
 		output, err := cmd.CombinedOutput()
@@ -94,8 +96,6 @@ func (e *Engine) RunCommand(command, dir string) error {
 		}
 		return nil
 	}
-
-	return cmd.Run()
 }
 
 // SortServices sorts services in dependency order for startup.
