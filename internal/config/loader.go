@@ -241,12 +241,12 @@ func validateSchema(raw any) error {
 	// will still catch real configuration errors.
 	jsonData, err := json.Marshal(jsonCompatible)
 	if err != nil {
-		return nil
+		return fmt.Errorf("internal error: failed to marshal jsonCompatible: %w", err)
 	}
 
 	var jsonValue any
 	if err := json.Unmarshal(jsonData, &jsonValue); err != nil {
-		return nil
+		return fmt.Errorf("internal error: failed to unmarshal jsonData: %w", err)
 	}
 
 	// Compile the embedded schema. Failures here indicate a bug in OneConfig
