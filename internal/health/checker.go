@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os/exec"
 	"time"
 
 	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/shell"
 )
 
 // Check performs a single health check as defined in the config.
@@ -130,6 +130,5 @@ func checkTCPAddr(addr string) error {
 
 // checkCommand runs a shell command and expects exit code 0.
 func checkCommand(command string) error {
-	cmd := exec.Command("sh", "-c", command)
-	return cmd.Run()
+	return shell.Command(command).Run()
 }

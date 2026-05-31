@@ -4,11 +4,10 @@ package pkgmanager
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 
 	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/shell"
 )
 
 // Runner executes package manager install commands.
@@ -42,12 +41,7 @@ func (r *Runner) Install(pm config.PackageManager) error {
 	}
 
 	// Run the command
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
-	}
+	cmd := shell.Command(command)
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "CI=true") // suppress interactive prompts
 

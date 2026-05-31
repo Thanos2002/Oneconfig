@@ -6,14 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/shell"
 )
 
 const stateFileName = ".oneconfig.state.json"
@@ -41,7 +42,10 @@ type stateFile struct {
 // NewManager creates a new service manager.
 func NewManager(projectDir string, verbose bool) *Manager {
 	logsDir := filepath.Join(projectDir, ".oneconfig", "logs")
-	os.MkdirAll(logsDir, 0755)
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		// Fall back to project directory if logs dir can't be created
+		logsDir = projectDir
+	}
 	return &Manager{
 		projectDir: projectDir,
 		verbose:    verbose,
@@ -60,12 +64,7 @@ func (m *Manager) Start(svc config.Service) error {
 	}
 
 	// Build command
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", svc.StartCommand)
-	} else {
-		cmd = exec.Command("sh", "-c", svc.StartCommand)
-	}
+	cmd := shell.Command(svc.StartCommand)
 	cmd.Dir = workDir
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
@@ -77,9 +76,7 @@ func (m *Manager) Start(svc config.Service) error {
 	}
 
 	// Start the process in a new process group so we can kill the group later
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		// CreationFlags for Windows; on Unix this would be Setpgid
-	}
+	shell.SetNewProcessGroup(cmd)
 
 	if err := cmd.Start(); err != nil {
 		logFile.Close()
@@ -99,12 +96,14 @@ func (m *Manager) Start(svc config.Service) error {
 }
 
 // StopAll stops all services recorded in the state file.
+// It attempts graceful shutdown (SIGTERM on Unix) before force-killing.
 func (m *Manager) StopAll() (int, error) {
 	state, err := m.loadState()
 	if err != nil {
 		return 0, nil // no state file = nothing to stop
 	}
 
+	const gracePeriod = 10 * time.Second
 	stopped := 0
 	var lastErr error
 
@@ -113,14 +112,34 @@ func (m *Manager) StopAll() (int, error) {
 			continue
 		}
 
+		// Verify the process is actually still running
+		if !isProcessRunning(svc.PID) {
+			continue
+		}
+
 		proc, err := os.FindProcess(svc.PID)
 		if err != nil {
 			continue
 		}
 
+		// Attempt graceful shutdown first (SIGTERM on Unix, Kill on Windows)
+		if err := shell.GracefulStop(proc); err != nil {
+			if !isAlreadyFinished(err) {
+				lastErr = fmt.Errorf("stopping %s (PID %d): %w", svc.Name, svc.PID, err)
+			}
+			continue
+		}
+
+		// Wait for the process to exit within the grace period
+		if waitForExit(svc.PID, gracePeriod) {
+			stopped++
+			continue
+		}
+
+		// Force kill if graceful shutdown timed out
 		if err := proc.Kill(); err != nil {
-			if !strings.Contains(err.Error(), "process already finished") {
-				lastErr = fmt.Errorf("killing %s (PID %d): %w", svc.Name, svc.PID, err)
+			if !isAlreadyFinished(err) {
+				lastErr = fmt.Errorf("force killing %s (PID %d): %w", svc.Name, svc.PID, err)
 			}
 		} else {
 			stopped++
@@ -207,7 +226,9 @@ func (m *Manager) loadState() (*stateFile, error) {
 
 func (m *Manager) saveState(state *stateFile) error {
 	dir := filepath.Join(m.projectDir, ".oneconfig")
-	os.MkdirAll(dir, 0755)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("creating state directory: %w", err)
+	}
 	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return err
@@ -245,4 +266,24 @@ func validatePort(port string) (int, error) {
 		return 0, fmt.Errorf("invalid port: %s", port)
 	}
 	return p, nil
+}
+
+// isAlreadyFinished checks if a process error indicates the process already exited.
+func isAlreadyFinished(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "process already finished") ||
+		strings.Contains(msg, "Access is denied") ||
+		strings.Contains(msg, "no such process")
+}
+
+// waitForExit polls until the process with the given PID exits or the timeout expires.
+func waitForExit(pid int, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if !isProcessRunning(pid) {
+			return true
+		}
+		time.Sleep(250 * time.Millisecond)
+	}
+	return false
 }

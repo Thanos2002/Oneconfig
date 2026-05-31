@@ -5,12 +5,11 @@ package orchestrator
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"sync"
 
 	"github.com/Thanos2002/Oneconfig/internal/config"
+	"github.com/Thanos2002/Oneconfig/internal/shell"
 	"github.com/Thanos2002/Oneconfig/internal/ui"
 )
 
@@ -80,12 +79,7 @@ func (e *Engine) RunSteps(steps []config.SetupStep) error {
 
 // RunCommand executes a single shell command in the given directory.
 func (e *Engine) RunCommand(command, dir string) error {
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
-	}
+	cmd := shell.Command(command)
 	cmd.Dir = dir
 	cmd.Env = os.Environ()
 

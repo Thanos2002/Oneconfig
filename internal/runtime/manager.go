@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/Thanos2002/Oneconfig/internal/shell"
 )
 
 // Manager handles runtime version detection and installation.
@@ -53,7 +55,7 @@ func (m *Manager) ensureNode(version string) error {
 	for _, mgr := range managers {
 		if _, err := exec.LookPath(mgr.check); err == nil {
 			// Version manager found — use it
-			cmd := exec.Command("sh", "-c", mgr.install)
+			cmd := shell.Command(mgr.install)
 			if output, err := cmd.CombinedOutput(); err != nil {
 				if m.verbose {
 					fmt.Printf("  [%s] %s\n", mgr.name, string(output))
@@ -90,7 +92,7 @@ func (m *Manager) ensurePython(version string) error {
 
 	// Try pyenv
 	if _, err := exec.LookPath("pyenv"); err == nil {
-		cmd := exec.Command("sh", "-c", fmt.Sprintf("pyenv install -s %s && pyenv local %s", version, version))
+		cmd := shell.Command(fmt.Sprintf("pyenv install -s %s && pyenv local %s", version, version))
 		if _, err := cmd.CombinedOutput(); err == nil {
 			return nil
 		}

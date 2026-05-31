@@ -1,6 +1,7 @@
 # Binaries
 oneconfig
-oneconfig.exe
+*.exe
+*.pdf
 
 # Build output
 dist/

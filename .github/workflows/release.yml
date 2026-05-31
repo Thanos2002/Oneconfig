@@ -21,24 +21,33 @@ jobs:
         with:
           go-version: '1.26'
           
+      - name: Run tests
+        run: go test -race ./...
+
       - name: Build binaries
         run: |
           mkdir -p dist
+          LDFLAGS="-s -w -X github.com/Thanos2002/Oneconfig/cmd.Version=${GITHUB_REF_NAME}"
           
           # Linux amd64
-          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/oneconfig/oneconfig/cmd.Version=${GITHUB_REF_NAME}" -o dist/oneconfig-linux-amd64 .
+          GOOS=linux GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/oneconfig-linux-amd64 .
           
           # Linux arm64
-          GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X github.com/oneconfig/oneconfig/cmd.Version=${GITHUB_REF_NAME}" -o dist/oneconfig-linux-arm64 .
+          GOOS=linux GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/oneconfig-linux-arm64 .
           
           # macOS amd64
-          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X github.com/oneconfig/oneconfig/cmd.Version=${GITHUB_REF_NAME}" -o dist/oneconfig-darwin-amd64 .
+          GOOS=darwin GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/oneconfig-darwin-amd64 .
           
           # macOS arm64
-          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X github.com/oneconfig/oneconfig/cmd.Version=${GITHUB_REF_NAME}" -o dist/oneconfig-darwin-arm64 .
+          GOOS=darwin GOARCH=arm64 go build -ldflags="${LDFLAGS}" -o dist/oneconfig-darwin-arm64 .
           
           # Windows amd64
-          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/oneconfig/oneconfig/cmd.Version=${GITHUB_REF_NAME}" -o dist/oneconfig-windows-amd64.exe .
+          GOOS=windows GOARCH=amd64 go build -ldflags="${LDFLAGS}" -o dist/oneconfig-windows-amd64.exe .
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

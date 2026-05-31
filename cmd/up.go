@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var dryRun bool
+
 var upCmd = &cobra.Command{
 	Use:   "up",
 	Short: "Set up and start the development environment",
@@ -29,15 +31,17 @@ var upCmd = &cobra.Command{
   7. Verify health checks
   8. Execute post-start commands
 
+Use --dry-run to preview all commands without executing them.
 The environment is ready when all health checks pass.`,
 	RunE: runUp,
 }
 
 func init() {
+	upCmd.Flags().BoolVar(&dryRun, "dry-run", false, "preview all commands without executing them")
 	rootCmd.AddCommand(upCmd)
 }
 
-func runUp(cmd *cobra.Command, args []string) error {
+func runUp(cmd *cobra.Command, args []string) (retErr error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("getting working directory: %w", err)
@@ -51,6 +55,11 @@ func runUp(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	ui.Success(fmt.Sprintf("Loaded config for %q", cfg.ProjectName))
+
+	// --- Dry-run mode: show what would be executed without making changes ---
+	if dryRun {
+		return printDryRun(cfg)
+	}
 
 	// Step 2: Install runtimes (FR-4)
 	if len(cfg.Runtimes) > 0 {
@@ -103,6 +112,18 @@ func runUp(cmd *cobra.Command, args []string) error {
 	if len(cfg.Services) > 0 {
 		ui.Header("Starting services")
 		svcMgr = services.NewManager(dir, verbose)
+
+		// Cleanup: if anything fails after services start, stop them
+		defer func() {
+			if retErr != nil {
+				fmt.Println()
+				ui.Warning("Failure detected — stopping services that were started...")
+				stopped, _ := svcMgr.StopAll()
+				if stopped > 0 {
+					ui.Info(fmt.Sprintf("Cleaned up %d service(s)", stopped))
+				}
+			}
+		}()
 
 		// Topological sort for dependency ordering
 		order, err := orchestrator.SortServices(cfg.Services)
@@ -177,5 +198,69 @@ func runUp(cmd *cobra.Command, args []string) error {
 	ui.Success("🚀 Environment is ready!")
 	fmt.Println()
 
+	return nil
+}
+
+// printDryRun displays all actions that would be taken without executing them.
+func printDryRun(cfg *config.Config) error {
+	ui.Header("Dry run — previewing actions (nothing will be executed)")
+
+	if len(cfg.Runtimes) > 0 {
+		ui.Step("Runtimes to install:")
+		for _, rt := range cfg.Runtimes {
+			fmt.Printf("    • %s %s\n", rt.Name, rt.Version)
+		}
+		fmt.Println()
+	}
+
+	if len(cfg.PackageManagers) > 0 {
+		ui.Step("Package managers to run:")
+		for _, pm := range cfg.PackageManagers {
+			cmdStr := pm.InstallCommand
+			if cmdStr == "" {
+				cmdStr = fmt.Sprintf("%s install", pm.Type)
+			}
+			fmt.Printf("    • %s (in %s)\n", cmdStr, pm.Path)
+		}
+		fmt.Println()
+	}
+
+	if len(cfg.EnvVars) > 0 {
+		ui.Step(fmt.Sprintf("Environment variables to set: %d", len(cfg.EnvVars)))
+		for k := range cfg.EnvVars {
+			fmt.Printf("    • %s\n", k)
+		}
+		fmt.Println()
+	}
+
+	if len(cfg.Services) > 0 {
+		ui.Step("Services to start:")
+		for _, svc := range cfg.Services {
+			deps := ""
+			if len(svc.DependsOn) > 0 {
+				deps = fmt.Sprintf(" (depends on: %s)", fmt.Sprintf("%v", svc.DependsOn))
+			}
+			fmt.Printf("    • %s: %s%s\n", svc.Name, svc.StartCommand, deps)
+		}
+		fmt.Println()
+	}
+
+	if len(cfg.SetupSteps) > 0 {
+		ui.Step("Setup steps to run:")
+		for _, step := range cfg.SetupSteps {
+			fmt.Printf("    • %s: %s\n", step.Name, step.Command)
+		}
+		fmt.Println()
+	}
+
+	if len(cfg.PostStartCommands) > 0 {
+		ui.Step("Post-start commands:")
+		for _, c := range cfg.PostStartCommands {
+			fmt.Printf("    • %s\n", c)
+		}
+		fmt.Println()
+	}
+
+	ui.Info("No changes were made. Remove --dry-run to execute.")
 	return nil
 }

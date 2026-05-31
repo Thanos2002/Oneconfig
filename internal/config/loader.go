@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -82,6 +83,10 @@ func Parse(data []byte) (*Config, error) {
 	return &cfg, nil
 }
 
+// validNamePattern restricts service/step names to safe characters,
+// preventing path traversal via crafted names used in log file paths.
+var validNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9._-]*$`)
+
 // Validate performs semantic validation on the config that goes beyond schema checks.
 func (c *Config) Validate() error {
 	if c.ProjectName == "" {
@@ -89,6 +94,28 @@ func (c *Config) Validate() error {
 			Type:    ErrInvalidConfig,
 			Message: "project_name is required",
 			Hint:    "Add 'project_name: my-app' to your oneconfig.yml.",
+		}
+	}
+
+	// Validate service names against safe pattern (prevents path traversal)
+	for _, svc := range c.Services {
+		if !validNamePattern.MatchString(svc.Name) {
+			return &ConfigError{
+				Type:    ErrInvalidConfig,
+				Message: fmt.Sprintf("Invalid service name: %q", svc.Name),
+				Hint:    "Service names must start with a letter or digit and contain only letters, digits, dots, hyphens, and underscores.",
+			}
+		}
+	}
+
+	// Validate setup step names against safe pattern
+	for _, step := range c.SetupSteps {
+		if !validNamePattern.MatchString(step.Name) {
+			return &ConfigError{
+				Type:    ErrInvalidConfig,
+				Message: fmt.Sprintf("Invalid setup step name: %q", step.Name),
+				Hint:    "Step names must start with a letter or digit and contain only letters, digits, dots, hyphens, and underscores.",
+			}
 		}
 	}
 
@@ -208,10 +235,13 @@ func validateSchema(raw any) error {
 	// (yaml.v3 uses map[string]any, but some values may need conversion)
 	jsonCompatible := convertToJSONCompatible(raw)
 
-	// Marshal and unmarshal through JSON to normalize types
+	// Marshal and unmarshal through JSON to normalize types.
+	// If the YAML data contains types not representable in JSON (extremely rare),
+	// skip schema validation. The subsequent struct unmarshal + semantic validation
+	// will still catch real configuration errors.
 	jsonData, err := json.Marshal(jsonCompatible)
 	if err != nil {
-		return nil // skip schema validation if we can't convert
+		return nil
 	}
 
 	var jsonValue any
@@ -219,15 +249,16 @@ func validateSchema(raw any) error {
 		return nil
 	}
 
-	// Compile schema
+	// Compile the embedded schema. Failures here indicate a bug in OneConfig
+	// (the schema is compiled into the binary), so they surface as hard errors.
 	compiler := jsonschema.NewCompiler()
 	if err := compiler.AddResource("oneconfig.schema.json", strings.NewReader(string(schemaBytes))); err != nil {
-		return nil // skip if schema can't be loaded
+		return fmt.Errorf("internal error: failed to load embedded JSON schema: %w", err)
 	}
 
 	schema, err := compiler.Compile("oneconfig.schema.json")
 	if err != nil {
-		return nil // skip if schema can't be compiled
+		return fmt.Errorf("internal error: failed to compile embedded JSON schema: %w", err)
 	}
 
 	if err := schema.Validate(jsonValue); err != nil {

@@ -114,5 +114,5 @@ func (w *Writer) writeFile(path string, vars map[string]string) error {
 	}
 	lines = append(lines, "")
 
-	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0644)
+	return os.WriteFile(path, []byte(strings.Join(lines, "\n")), 0600)
 }
