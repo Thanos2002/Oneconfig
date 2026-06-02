@@ -77,7 +77,7 @@ func (d *PythonDetector) detectPyproject(dir, relPath string, result *ScanResult
 	// Check for uv.lock alongside
 	if _, err := os.Stat(filepath.Join(dir, "uv.lock")); err == nil {
 		pmType = "uv"
-		result.Findings = append(result.Findings, fmt.Sprintf("  Found uv.lock → using uv"))
+		result.Findings = append(result.Findings, "  Found uv.lock → using uv")
 	}
 
 	result.Findings = append(result.Findings, fmt.Sprintf("Found pyproject.toml in %s → Python project (%s)", desc, buildTool))
@@ -112,7 +112,7 @@ func (d *PythonDetector) detectRequirements(dir, relPath string, result *ScanRes
 	pmType := "pip"
 	if _, err := os.Stat(filepath.Join(dir, "uv.lock")); err == nil {
 		pmType = "uv"
-		result.Findings = append(result.Findings, fmt.Sprintf("  Found uv.lock → using uv"))
+		result.Findings = append(result.Findings, "  Found uv.lock → using uv")
 	}
 	result.addPackageManager(pmType, relPath)
 
