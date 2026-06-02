@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -259,14 +258,7 @@ func isProcessRunning(pid int) bool {
 	return err == nil
 }
 
-// Ensure the port is valid
-func validatePort(port string) (int, error) {
-	p, err := strconv.Atoi(port)
-	if err != nil || p < 1 || p > 65535 {
-		return 0, fmt.Errorf("invalid port: %s", port)
-	}
-	return p, nil
-}
+
 
 // isAlreadyFinished checks if a process error indicates the process already exited.
 func isAlreadyFinished(err error) bool {

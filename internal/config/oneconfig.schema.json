@@ -22,7 +22,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "enum": ["node", "python"],
+            "enum": ["node", "python", "go", "rust", "ruby", "java"],
             "description": "Runtime identifier."
           },
           "version": {
@@ -42,7 +42,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["npm", "yarn", "pnpm", "pip", "poetry", "uv"],
+            "enum": ["npm", "yarn", "pnpm", "pip", "poetry", "uv", "gradle", "maven", "bundler", "cargo", "go"],
             "description": "Package manager to use."
           },
           "path": {

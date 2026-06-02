@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Thanos2002/Oneconfig/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +22,11 @@ var (
 	noColor bool
 )
 
+// ConfigFilePath returns the path specified by the --config flag, or empty if not set.
+func ConfigFilePath() string {
+	return cfgFile
+}
+
 // rootCmd is the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "oneconfig",
@@ -33,6 +39,11 @@ services manually. Just clone and run:
 
   oneconfig up`,
 	Version: Version,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if noColor {
+			ui.DisableColor()
+		}
+	},
 }
 
 // Execute runs the root command.

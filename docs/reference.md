@@ -40,12 +40,10 @@ package_managers:
 ## `env_vars` (map)
 
 Environment variables to set. Variables are merged into a local `.env` file and will not overwrite existing user values.
-Use a `- file: <path>` item to merge variables from a template file.
 
 ```yaml
 env_vars:
   DATABASE_URL: postgres://localhost:5432/db
-  - file: .env.example
 ```
 
 ## `services` (list)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/Thanos2002/Oneconfig/internal/config"
 	"github.com/Thanos2002/Oneconfig/internal/shell"
@@ -38,7 +39,12 @@ func (r *Runner) Install(ctx context.Context, pm config.PackageManager) error {
 	}
 
 	if command == "" {
-		return fmt.Errorf("unsupported package manager type: %s", pm.Type)
+		if r.verbose {
+			fmt.Printf("  ⚠️  Unsupported package manager %s (skipping install)\n", pm.Type)
+		} else {
+			fmt.Printf("  ⚠️  Unsupported package manager %s (skipping)\n", pm.Type)
+		}
+		return nil
 	}
 
 	// Run the command
@@ -68,7 +74,10 @@ func defaultInstallCommand(pmType string) string {
 	case "pnpm":
 		return "pnpm install --frozen-lockfile"
 	case "pip":
-		return "pip install -r requirements.txt"
+		if runtime.GOOS == "windows" {
+			return "python -m venv .venv && .venv\\Scripts\\pip install -r requirements.txt"
+		}
+		return "python -m venv .venv && .venv/bin/pip install -r requirements.txt"
 	case "poetry":
 		return "poetry install"
 	case "uv":

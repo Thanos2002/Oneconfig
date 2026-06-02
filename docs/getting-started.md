@@ -6,16 +6,6 @@ Welcome to OneConfig! This guide will help you set up OneConfig for your project
 
 Choose the installation method for your operating system:
 
-**macOS / Linux:**
-```bash
-curl -fsSL https://oneconfig.dev/install.sh | sh
-```
-
-**Windows:**
-```bash
-winget install oneconfig
-```
-
 **From Source (requires Go 1.26+):**
 ```bash
 go install github.com/Thanos2002/Oneconfig@latest
@@ -60,7 +50,7 @@ package_managers:
 
 env_vars:
   NODE_ENV: development
-  - file: .env.example
+  # Add other environment variables here
 
 services:
   - name: api

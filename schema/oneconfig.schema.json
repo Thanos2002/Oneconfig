@@ -1,8 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://oneconfig.dev/schema/v1",
   "title": "OneConfig Configuration",
-  "description": "Schema for oneconfig.yml — a single config file that defines a repository's local development environment.",
+  "description": "Schema for oneconfig.yml — a single config file that defines a repository's local development environment. (Note: This is automatically synced from internal/config/oneconfig.schema.json)",
   "type": "object",
   "required": ["project_name"],
   "additionalProperties": false,
@@ -22,7 +22,7 @@
         "properties": {
           "name": {
             "type": "string",
-            "enum": ["node", "python"],
+            "enum": ["node", "python", "go", "rust", "ruby", "java"],
             "description": "Runtime identifier."
           },
           "version": {
@@ -42,7 +42,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["npm", "yarn", "pnpm", "pip", "poetry", "uv"],
+            "enum": ["npm", "yarn", "pnpm", "pip", "poetry", "uv", "gradle", "maven", "bundler", "cargo", "go"],
             "description": "Package manager to use."
           },
           "path": {
@@ -81,7 +81,7 @@
       "type": "array",
       "description": "Local services to start as part of the development environment.",
       "items": {
-        "$ref": "#/definitions/service"
+        "$ref": "#/$defs/service"
       }
     },
     "setup_steps": {
@@ -163,7 +163,7 @@
       }
     }
   },
-  "definitions": {
+  "$defs": {
     "service": {
       "type": "object",
       "required": ["name", "start_command"],

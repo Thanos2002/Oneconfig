@@ -32,6 +32,13 @@ func runInit(cmd *cobra.Command, args []string) error {
 	}
 
 	configPath := filepath.Join(dir, config.DefaultConfigFile)
+	if ConfigFilePath() != "" {
+		if filepath.IsAbs(ConfigFilePath()) {
+			configPath = ConfigFilePath()
+		} else {
+			configPath = filepath.Join(dir, ConfigFilePath())
+		}
+	}
 
 	// Check if config already exists
 	if _, err := os.Stat(configPath); err == nil {
@@ -68,7 +75,7 @@ func generateDefaultConfig(dir string) string {
 	projectName := filepath.Base(dir)
 
 	tmpl := fmt.Sprintf(`# OneConfig — Local Development Environment
-# Docs: https://oneconfig.dev/docs/reference
+# Docs: https://github.com/Thanos2002/Oneconfig#-example-configuration
 
 project_name: %s
 

@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 permissions:
   contents: read
@@ -34,6 +34,9 @@ jobs:
 
       - name: Verify build
         run: go build ./...
+
+      - name: Verify install
+        run: go install ./...
 
   lint:
     name: Lint

@@ -30,7 +30,12 @@ func (m *Manager) Ensure(ctx context.Context, name, version string) error {
 	case "python":
 		return m.ensurePython(ctx, version)
 	default:
-		return fmt.Errorf("unsupported runtime: %s (supported: node, python)", name)
+		if m.verbose {
+			fmt.Printf("  ⚠️  Unsupported runtime %s by manager (skipping version enforcement)\n", name)
+		} else {
+			fmt.Printf("  ⚠️  Unsupported runtime %s (skipping)\n", name)
+		}
+		return nil
 	}
 }
 

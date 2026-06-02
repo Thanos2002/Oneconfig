@@ -14,6 +14,11 @@ func init() {
 	pterm.DisableDebugMessages()
 }
 
+// DisableColor globally disables colored output.
+func DisableColor() {
+	pterm.DisableColor()
+}
+
 var (
 	// Brand colors
 	PrimaryColor = pterm.NewStyle(pterm.FgCyan, pterm.Bold)

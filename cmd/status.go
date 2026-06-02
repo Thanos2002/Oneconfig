@@ -27,7 +27,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("getting working directory: %w", err)
 	}
 
-	cfg, err := config.Load(dir)
+	cfg, err := config.LoadFromPath(dir, ConfigFilePath())
 	if err != nil {
 		return err
 	}

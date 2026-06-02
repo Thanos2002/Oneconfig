@@ -58,7 +58,9 @@ OneConfig eliminates all of that. It deep-scans your repository, infers your ent
 go install github.com/Thanos2002/Oneconfig@latest
 ```
 
-> **Note:** Ensure `$GOPATH/bin` (or `$HOME/go/bin`) is in your system `PATH` so the `oneconfig` command is available globally.
+> **Note:** `go install` uses the last part of the module path for the binary name, so this will install as `Oneconfig` (with a capital O). On case-sensitive systems (Linux/macOS), you may need to alias it or rename the binary to `oneconfig` to follow the docs.
+>
+> **Note:** Ensure `$GOPATH/bin` (or `$HOME/go/bin`) is in your system `PATH` so the command is available globally.
 
 ### 2. Generate
 

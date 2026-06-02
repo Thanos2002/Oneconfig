@@ -49,7 +49,7 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 
 	// Step 1: Load and validate config (FR-1, FR-2, FR-3)
 	ui.Header("Loading configuration")
-	cfg, err := config.Load(dir)
+	cfg, err := config.LoadFromPath(dir, ConfigFilePath())
 	if err != nil {
 		ui.Error("Failed to load configuration", "")
 		return err

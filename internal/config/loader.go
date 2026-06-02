@@ -28,6 +28,17 @@ func Load(dir string) (*Config, error) {
 	return LoadFile(path)
 }
 
+// LoadFromPath loads config with an optional config file path override.
+func LoadFromPath(dir, configFile string) (*Config, error) {
+	if configFile != "" {
+		if !filepath.IsAbs(configFile) {
+			configFile = filepath.Join(dir, configFile)
+		}
+		return LoadFile(configFile)
+	}
+	return Load(dir)
+}
+
 // LoadFile reads and parses a oneconfig.yml file from the given path.
 func LoadFile(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
@@ -68,7 +79,7 @@ func Parse(data []byte) (*Config, error) {
 		return nil, &ConfigError{
 			Type:    ErrInvalidConfig,
 			Message: fmt.Sprintf("Failed to parse config: %s", err),
-			Hint:    "Ensure your oneconfig.yml matches the expected structure. See https://oneconfig.dev/docs/reference",
+			Hint:    "Ensure your oneconfig.yml matches the expected structure. See https://github.com/Thanos2002/Oneconfig#-example-configuration",
 		}
 	}
 
