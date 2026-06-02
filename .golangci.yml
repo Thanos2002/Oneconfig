@@ -1,0 +1,4 @@
+run:
+  # Override the targeted Go version for the linter.
+  # This bypasses the version check since golangci-lint is currently built with go1.24.
+  go: '1.24'
