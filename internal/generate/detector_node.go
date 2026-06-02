@@ -85,48 +85,48 @@ func (d *NodeDetector) detectAt(projectDir, relPath string, result *ScanResult) 
 	if _, err := os.Stat(filepath.Join(dir, "yarn.lock")); err == nil {
 		pmType = "yarn"
 		hasLocalLockfile = true
-		result.Findings = append(result.Findings, fmt.Sprintf("  Found yarn.lock → using yarn"))
+		result.Findings = append(result.Findings, "  Found yarn.lock → using yarn")
 	} else if _, err := os.Stat(filepath.Join(dir, "pnpm-lock.yaml")); err == nil {
 		pmType = "pnpm"
 		hasLocalLockfile = true
-		result.Findings = append(result.Findings, fmt.Sprintf("  Found pnpm-lock.yaml → using pnpm"))
+		result.Findings = append(result.Findings, "  Found pnpm-lock.yaml → using pnpm")
 	} else if _, err := os.Stat(filepath.Join(dir, "bun.lockb")); err == nil {
 		pmType = "bun"
 		hasLocalLockfile = true
-		result.Findings = append(result.Findings, fmt.Sprintf("  Found bun.lockb → using bun"))
+		result.Findings = append(result.Findings, "  Found bun.lockb → using bun")
 	} else if _, err := os.Stat(filepath.Join(dir, "bun.lock")); err == nil {
 		pmType = "bun"
 		hasLocalLockfile = true
-		result.Findings = append(result.Findings, fmt.Sprintf("  Found bun.lock → using bun"))
+		result.Findings = append(result.Findings, "  Found bun.lock → using bun")
 	} else if _, err := os.Stat(filepath.Join(dir, "package-lock.json")); err == nil {
 		pmType = "npm"
 		hasLocalLockfile = true
-		result.Findings = append(result.Findings, fmt.Sprintf("  Found package-lock.json → using npm"))
+		result.Findings = append(result.Findings, "  Found package-lock.json → using npm")
 	}
 
 	// If no local lockfile, check root directory for workspace lockfiles
 	if !hasLocalLockfile && relPath != "." {
 		if _, err := os.Stat(filepath.Join(projectDir, "yarn.lock")); err == nil {
 			pmType = "yarn"
-			result.Findings = append(result.Findings, fmt.Sprintf("  No local lockfile, but root has yarn.lock → workspace using yarn"))
+			result.Findings = append(result.Findings, "  No local lockfile, but root has yarn.lock → workspace using yarn")
 		} else if _, err := os.Stat(filepath.Join(projectDir, "pnpm-lock.yaml")); err == nil {
 			pmType = "pnpm"
-			result.Findings = append(result.Findings, fmt.Sprintf("  No local lockfile, but root has pnpm-lock.yaml → workspace using pnpm"))
+			result.Findings = append(result.Findings, "  No local lockfile, but root has pnpm-lock.yaml → workspace using pnpm")
 		} else if _, err := os.Stat(filepath.Join(projectDir, "bun.lockb")); err == nil {
 			pmType = "bun"
-			result.Findings = append(result.Findings, fmt.Sprintf("  No local lockfile, but root has bun.lockb → workspace using bun"))
+			result.Findings = append(result.Findings, "  No local lockfile, but root has bun.lockb → workspace using bun")
 		} else if _, err := os.Stat(filepath.Join(projectDir, "bun.lock")); err == nil {
 			pmType = "bun"
-			result.Findings = append(result.Findings, fmt.Sprintf("  No local lockfile, but root has bun.lock → workspace using bun"))
+			result.Findings = append(result.Findings, "  No local lockfile, but root has bun.lock → workspace using bun")
 		} else if _, err := os.Stat(filepath.Join(projectDir, "package-lock.json")); err == nil {
 			pmType = "npm"
-			result.Findings = append(result.Findings, fmt.Sprintf("  No local lockfile, but root has package-lock.json → workspace using npm"))
+			result.Findings = append(result.Findings, "  No local lockfile, but root has package-lock.json → workspace using npm")
 		} else {
-			result.Findings = append(result.Findings, fmt.Sprintf("  No lockfile detected → defaulting to npm"))
+			result.Findings = append(result.Findings, "  No lockfile detected → defaulting to npm")
 			hasLocalLockfile = true // Force adding it since we don't have a workspace
 		}
 	} else if !hasLocalLockfile && relPath == "." {
-		result.Findings = append(result.Findings, fmt.Sprintf("  No lockfile detected → defaulting to npm"))
+		result.Findings = append(result.Findings, "  No lockfile detected → defaulting to npm")
 		hasLocalLockfile = true
 	}
 
