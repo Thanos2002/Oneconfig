@@ -96,7 +96,7 @@ func Table(headers []string, rows [][]string) {
 	for _, row := range rows {
 		data = append(data, row)
 	}
-	pterm.DefaultTable.WithHasHeader().WithData(data).Render()
+	_ = pterm.DefaultTable.WithHasHeader().WithData(data).Render()
 }
 
 // StatusBadge returns a colored status string.

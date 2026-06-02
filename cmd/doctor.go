@@ -92,10 +92,10 @@ func installHint(tool string) string {
 	case "darwin":
 		return fmt.Sprintf("brew install %s", tool)
 	case "linux":
-		return fmt.Sprintf("Check your package manager or https://github.com/Thanos2002/Oneconfig#-quick-start")
+		return "Check your package manager or https://github.com/Thanos2002/Oneconfig#-quick-start"
 	case "windows":
 		return fmt.Sprintf("winget install %s or https://github.com/Thanos2002/Oneconfig#-quick-start", tool)
 	default:
-		return fmt.Sprintf("https://github.com/Thanos2002/Oneconfig#-quick-start")
+		return "https://github.com/Thanos2002/Oneconfig#-quick-start"
 	}
 }

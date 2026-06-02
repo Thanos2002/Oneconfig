@@ -25,10 +25,9 @@ func (d *GoDetector) Detect(projectDir string, result *ScanResult) error {
 	result.Findings = append(result.Findings, "Found go.mod → Go project")
 
 	// Extract Go version
-	version := "1.22"
 	re := regexp.MustCompile(`(?m)^go\s+(\d+\.\d+)`)
 	if m := re.FindStringSubmatch(content); len(m) >= 2 {
-		version = m[1]
+		version := m[1]
 		result.Findings = append(result.Findings, fmt.Sprintf("  Go version: %s", version))
 	}
 

@@ -87,7 +87,7 @@ func (m *Manager) Start(svc config.Service) error {
 
 	// Don't wait — the service runs in the background
 	go func() {
-		cmd.Wait()
+		_ = cmd.Wait()
 		logFile.Close()
 	}()
 
@@ -207,7 +207,7 @@ func (m *Manager) recordPID(name string, port int, pid int) {
 		State: "running",
 	})
 
-	m.saveState(state)
+	_ = m.saveState(state)
 }
 
 func (m *Manager) loadState() (*stateFile, error) {

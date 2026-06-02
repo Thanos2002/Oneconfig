@@ -71,7 +71,7 @@ func (d *DockerComposeDetector) convertService(name string, cs composeService) c
 
 	// Build start command
 	if cs.Image != "" {
-		cmd := fmt.Sprintf("docker run --rm")
+		cmd := "docker run --rm"
 
 		// Add port mappings
 		for _, p := range cs.Ports {
