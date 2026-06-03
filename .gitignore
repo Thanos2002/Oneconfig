@@ -15,7 +15,7 @@ graphify-out/
 
 # Environment files
 .env
-
+architecture_overview.md
 # IDE
 .idea/
 .vscode/

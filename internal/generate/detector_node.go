@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/Thanos2002/Oneconfig/internal/config"
@@ -136,7 +134,7 @@ func (d *NodeDetector) detectAt(projectDir, relPath string, result *ScanResult) 
 	}
 
 	// Detect service from scripts
-	svc := d.inferService(pkg, relPath, pmType, result)
+	svc := d.inferService(dir, pkg, relPath, pmType, result)
 	if svc != nil {
 		result.addService(*svc)
 		result.Findings = append(result.Findings, fmt.Sprintf("  Inferred service %q on port %d", svc.Name, svc.Port))
@@ -144,7 +142,7 @@ func (d *NodeDetector) detectAt(projectDir, relPath string, result *ScanResult) 
 }
 
 // inferService tries to determine a runnable service from package.json scripts.
-func (d *NodeDetector) inferService(pkg packageJSON, relPath string, pmType string, result *ScanResult) *config.Service {
+func (d *NodeDetector) inferService(dir string, pkg packageJSON, relPath string, pmType string, result *ScanResult) *config.Service {
 	// Determine service name
 	name := pkg.Name
 	if name == "" {
@@ -168,23 +166,64 @@ func (d *NodeDetector) inferService(pkg packageJSON, relPath string, pmType stri
 		port = 5173
 	} else if _, ok := pkg.Dependencies["vite"]; ok {
 		port = 5173
+	} else if _, ok := pkg.Dependencies["@angular/cli"]; ok {
+		port = 4200
+	} else if _, ok := pkg.DevDependencies["@angular/cli"]; ok {
+		port = 4200
+	} else if _, ok := pkg.Dependencies["nuxt"]; ok {
+		port = 3000
+	} else if _, ok := pkg.DevDependencies["nuxt"]; ok {
+		port = 3000
+	} else if _, ok := pkg.Dependencies["@sveltejs/kit"]; ok {
+		port = 5173
+	} else if _, ok := pkg.DevDependencies["@sveltejs/kit"]; ok {
+		port = 5173
+	} else if _, ok := pkg.Dependencies["svelte"]; ok {
+		port = 5173
+	} else if _, ok := pkg.DevDependencies["svelte"]; ok {
+		port = 5173
+	} else if _, ok := pkg.Dependencies["gatsby"]; ok {
+		port = 8000
+	} else if _, ok := pkg.DevDependencies["gatsby"]; ok {
+		port = 8000
+	} else if _, ok := pkg.Dependencies["remix"]; ok {
+		port = 3000
+	} else if _, ok := pkg.Dependencies["@remix-run/react"]; ok {
+		port = 3000
+	} else if _, ok := pkg.Dependencies["astro"]; ok {
+		port = 4321
+	} else if _, ok := pkg.DevDependencies["astro"]; ok {
+		port = 4321
+	} else if _, ok := pkg.Dependencies["parcel"]; ok {
+		port = 1234
+	} else if _, ok := pkg.DevDependencies["parcel"]; ok {
+		port = 1234
+	} else if _, ok := pkg.Dependencies["webpack-dev-server"]; ok {
+		port = 8080
+	} else if _, ok := pkg.DevDependencies["webpack-dev-server"]; ok {
+		port = 8080
 	}
 
 	// Prefer "dev" script for development, fall back to "start"
+	var scriptStr string
 	if script, ok := pkg.Scripts["dev"]; ok {
 		startCmd = fmt.Sprintf("%s run dev", pmType)
-		// Try to extract port from the script
-		if p := extractPort(script); p > 0 {
-			port = p
-		}
+		scriptStr = script
 	} else if script, ok := pkg.Scripts["start"]; ok {
 		startCmd = fmt.Sprintf("%s start", pmType)
-		if p := extractPort(script); p > 0 {
-			port = p
-		}
+		scriptStr = script
 	} else {
 		return nil // no runnable script
 	}
+
+	// Resolve the final port using the priority strategy
+	port = resolvePort(
+		extractPortFromScript(scriptStr),
+		extractPortFromEnv(dir),
+		extractPortFromViteConfig(dir),
+		extractPortFromNextConfig(dir),
+		port, // fallback to framework default
+	)
 
 	svc := &config.Service{
 		Name:         name,
@@ -239,16 +278,3 @@ func (d *NodeDetector) inferService(pkg packageJSON, relPath string, pmType stri
 	return svc
 }
 
-// extractPort tries to find a --port or -p flag value in a command string.
-var portRe = regexp.MustCompile(`(?:--port|--PORT|-p)\s+(\d+)`)
-
-func extractPort(cmd string) int {
-	m := portRe.FindStringSubmatch(cmd)
-	if len(m) >= 2 {
-		p, err := strconv.Atoi(m[1])
-		if err == nil {
-			return p
-		}
-	}
-	return 0
-}

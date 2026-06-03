@@ -26,26 +26,39 @@ func (d *RustDetector) Detect(projectDir string, result *ScanResult) error {
 	result.addRuntime("rust", "stable")
 	result.addPackageManager("cargo", ".")
 
-	// Check if it has a binary target
+	// Check if it has a binary target and is likely a web project
 	data, err := os.ReadFile(cargoPath)
 	if err == nil {
 		content := string(data)
-		if strings.Contains(content, "[[bin]]") || !strings.Contains(content, "[lib]") {
+		
+		isWeb := strings.Contains(content, "actix-web") || 
+		         strings.Contains(content, "axum") || 
+				 strings.Contains(content, "rocket") || 
+				 strings.Contains(content, "warp")
+
+		if (strings.Contains(content, "[[bin]]") || !strings.Contains(content, "[lib]")) && isWeb {
 			name := "rust-app"
 			re := regexp.MustCompile(`name\s*=\s*"([^"]+)"`)
 			if m := re.FindStringSubmatch(content); len(m) > 1 {
 				name = m[1]
 			}
+			
+			resolvedPort := resolvePort(
+				extractPortFromRegexFile(projectDir, []string{"Rocket.toml"}, `(?m)^\s*port\s*=\s*(\d+)`),
+				extractPortFromEnv(projectDir),
+				8080,
+			)
+
 			result.addService(config.Service{
 				Name:         name,
 				StartCommand: "cargo run",
-				Port:         8080,
+				Port:         resolvedPort,
 				HealthCheck: &config.ServiceHealth{
 					Type:   "http",
-					Target: "http://localhost:8080",
+					Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 				},
 			})
-			result.Findings = append(result.Findings, fmt.Sprintf("  Inferred service %q", name))
+			result.Findings = append(result.Findings, fmt.Sprintf("  Inferred web service %q", name))
 		}
 	}
 	return nil

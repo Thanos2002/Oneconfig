@@ -148,6 +148,79 @@ func TestNodeDetector_VitePort(t *testing.T) {
 	}
 }
 
+func TestNodeDetector_ViteConfigPort(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "package.json", `{
+		"name": "vite-custom",
+		"scripts": { "dev": "vite" },
+		"devDependencies": { "vite": "^5.0.0" }
+	}`)
+	writeFile(t, dir, "vite.config.ts", `
+export default defineConfig({
+  server: {
+    port: 3000
+  }
+})
+`)
+
+	scanner := NewScanner(dir)
+	result, err := scanner.Scan()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Config.Services) == 0 {
+		t.Fatal("expected service")
+	}
+	if result.Config.Services[0].Port != 3000 {
+		t.Errorf("expected port 3000 from vite.config.ts, got %d", result.Config.Services[0].Port)
+	}
+}
+
+func TestNodeDetector_EnvPort(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "package.json", `{
+		"name": "env-app",
+		"scripts": { "start": "node server.js" }
+	}`)
+	writeFile(t, dir, ".env", "PORT=4000\n")
+
+	scanner := NewScanner(dir)
+	result, err := scanner.Scan()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Config.Services) == 0 {
+		t.Fatal("expected service")
+	}
+	if result.Config.Services[0].Port != 4000 {
+		t.Errorf("expected port 4000 from .env, got %d", result.Config.Services[0].Port)
+	}
+}
+
+func TestNodeDetector_ScriptInlinePort(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "package.json", `{
+		"name": "inline-app",
+		"scripts": { "dev": "PORT=4000 next dev" },
+		"dependencies": { "next": "^14.0.0" }
+	}`)
+
+	scanner := NewScanner(dir)
+	result, err := scanner.Scan()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Config.Services) == 0 {
+		t.Fatal("expected service")
+	}
+	if result.Config.Services[0].Port != 4000 {
+		t.Errorf("expected port 4000 from inline script assignment, got %d", result.Config.Services[0].Port)
+	}
+}
+
 func TestPythonDetector_RequirementsTxt(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "requirements.txt", "fastapi==0.103.1\nuvicorn==0.23.2\n")
@@ -315,6 +388,35 @@ func main() {}
 	}
 }
 
+func TestGoDetector_GinFramework(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "go.mod", `module github.com/example/myapp
+
+go 1.23
+
+require (
+	github.com/gin-gonic/gin v1.9.1
+)
+`)
+	writeFile(t, dir, "main.go", `package main
+import "github.com/gin-gonic/gin"
+func main() {}
+`)
+
+	scanner := NewScanner(dir)
+	result, err := scanner.Scan()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Config.Services) == 0 {
+		t.Fatal("expected Go web service")
+	}
+	if result.Config.Services[0].Port != 8080 {
+		t.Errorf("expected port 8080 for Gin, got %d", result.Config.Services[0].Port)
+	}
+}
+
 func TestEnvFileDetector(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, ".env.example", `# Database config
@@ -445,6 +547,25 @@ func TestMonorepoDetector(t *testing.T) {
 	}
 }
 
+func TestJavaDetector_SpringPortOverride(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "pom.xml", `<project><dependencies><dependency><groupId>org.springframework.boot</groupId></dependency></dependencies></project>`)
+	writeFile(t, dir, "src/main/resources/application.properties", "server.port=9090\n")
+
+	scanner := NewScanner(dir)
+	result, err := scanner.Scan()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Config.Services) == 0 {
+		t.Fatal("expected Java service")
+	}
+	if result.Config.Services[0].Port != 9090 {
+		t.Errorf("expected port 9090 from application.properties, got %d", result.Config.Services[0].Port)
+	}
+}
+
 func TestEmitYAML_RoundTrip(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "package.json", `{
@@ -478,7 +599,7 @@ func TestEmitYAML_RoundTrip(t *testing.T) {
 	}
 }
 
-func TestExtractPort(t *testing.T) {
+func TestExtractPort_Enhanced(t *testing.T) {
 	tests := []struct {
 		cmd  string
 		want int
@@ -488,12 +609,16 @@ func TestExtractPort(t *testing.T) {
 		{"next dev -p 4000", 4000},
 		{"npm start", 0},
 		{"", 0},
+		{"PORT=4000 next dev", 4000},
+		{"fastapi run --port=8080", 8080},
+		{"rails s -p 3000", 3000},
+		{"server --listen 5050", 5050},
 	}
 
 	for _, tt := range tests {
-		got := extractPort(tt.cmd)
+		got := extractPortFromScript(tt.cmd)
 		if got != tt.want {
-			t.Errorf("extractPort(%q) = %d, want %d", tt.cmd, got, tt.want)
+			t.Errorf("extractPortFromScript(%q) = %d, want %d", tt.cmd, got, tt.want)
 		}
 	}
 }

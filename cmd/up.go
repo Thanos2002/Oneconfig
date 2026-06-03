@@ -214,6 +214,21 @@ func runUp(cmd *cobra.Command, args []string) (retErr error) {
 		}
 	}
 
+	// Display service URLs for easy access
+	var webServices []config.Service
+	for _, svc := range cfg.Services {
+		if svc.Port > 0 {
+			webServices = append(webServices, svc)
+		}
+	}
+
+	if len(webServices) > 0 {
+		ui.Header("Services available at:")
+		for _, svc := range webServices {
+			fmt.Printf("  • %s: http://localhost:%d\n", svc.Name, svc.Port)
+		}
+	}
+
 	// Done!
 	fmt.Println()
 	ui.Success("🚀 Environment is ready!")

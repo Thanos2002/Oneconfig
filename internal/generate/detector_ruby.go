@@ -36,24 +36,33 @@ func (d *RubyDetector) Detect(projectDir string, result *ScanResult) error {
 
 	content := string(data)
 	if strings.Contains(content, "rails") {
+		resolvedPort := resolvePort(
+			extractPortFromRegexFile(projectDir, []string{"config/puma.rb"}, `(?m)^\s*port\s+(?:ENV\.fetch\(['"]PORT['"]\)\s*\{\s*)?(\d+)`),
+			extractPortFromEnv(projectDir),
+			3000,
+		)
 		result.addService(config.Service{
 			Name:         "web",
-			StartCommand: "bundle exec rails server -p 3000",
-			Port:         3000,
+			StartCommand: fmt.Sprintf("bundle exec rails server -p %d", resolvedPort),
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:3000",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		})
 		result.Findings = append(result.Findings, "  Detected Rails framework")
 	} else if strings.Contains(content, "sinatra") {
+		resolvedPort := resolvePort(
+			extractPortFromEnv(projectDir),
+			4567,
+		)
 		result.addService(config.Service{
 			Name:         "web",
 			StartCommand: "bundle exec ruby app.rb",
-			Port:         4567,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:4567",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		})
 		result.Findings = append(result.Findings, "  Detected Sinatra framework")

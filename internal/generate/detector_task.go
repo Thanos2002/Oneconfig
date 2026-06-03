@@ -50,7 +50,10 @@ func (d *TaskRunnerDetector) Detect(projectDir string, result *ScanResult) error
 				name := strings.TrimSpace(parts[0])
 				cmd := strings.TrimSpace(parts[1])
 
-				port := extractPort(cmd)
+				port := resolvePort(
+					extractPortFromScript(cmd),
+					extractPortFromEnv(projectDir),
+				)
 				if port == 0 && name == "web" {
 					port = 8080
 				}

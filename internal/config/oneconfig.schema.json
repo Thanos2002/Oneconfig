@@ -42,7 +42,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["npm", "yarn", "pnpm", "pip", "poetry", "uv", "gradle", "maven", "bundler", "cargo", "go"],
+            "enum": ["npm", "yarn", "pnpm", "bun", "pip", "poetry", "uv", "gradle", "maven", "bundler", "cargo", "go"],
             "description": "Package manager to use."
           },
           "path": {

@@ -254,33 +254,55 @@ func (d *PythonDetector) inferServiceFromRequirements(dir, content, relPath stri
 		if hasFastAPI && !hasUvicorn {
 			cmd = "python -m fastapi run --port 8000"
 		}
+		
+		projectDir := dir // dir is projectDir + relPath
+		resolvedPort := resolvePort(
+			extractPortFromScript(cmd),
+			extractPortFromEnv(projectDir),
+			8000,
+		)
+
 		svc = &config.Service{
 			Name:         name,
 			StartCommand: cmd,
-			Port:         8000,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:8000/health",
+				Target: fmt.Sprintf("http://localhost:%d/health", resolvedPort),
 			},
 		}
 	} else if hasFlask {
+		cmd := "python -m flask run --port 5000"
+		projectDir := dir
+		resolvedPort := resolvePort(
+			extractPortFromScript(cmd),
+			extractPortFromEnv(projectDir),
+			5000,
+		)
 		svc = &config.Service{
 			Name:         name,
-			StartCommand: "python -m flask run --port 5000",
-			Port:         5000,
+			StartCommand: cmd,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:5000",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		}
 	} else if hasDjango {
+		cmd := "python manage.py runserver 8000"
+		projectDir := dir
+		resolvedPort := resolvePort(
+			extractPortFromScript(cmd),
+			extractPortFromEnv(projectDir),
+			8000,
+		)
 		svc = &config.Service{
 			Name:         name,
-			StartCommand: "python manage.py runserver 8000",
-			Port:         8000,
+			StartCommand: cmd,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:8000",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		}
 	} else if hasStreamlit {
@@ -288,13 +310,20 @@ func (d *PythonDetector) inferServiceFromRequirements(dir, content, relPath stri
 		if script == "" {
 			script = "app.py"
 		}
+		cmd := fmt.Sprintf("streamlit run %s", script)
+		projectDir := dir
+		resolvedPort := resolvePort(
+			extractPortFromScript(cmd),
+			extractPortFromEnv(projectDir),
+			8501,
+		)
 		svc = &config.Service{
 			Name:         name,
-			StartCommand: fmt.Sprintf("streamlit run %s", script),
-			Port:         8501,
+			StartCommand: cmd,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:8501",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		}
 	} else if hasGradio {
@@ -302,13 +331,20 @@ func (d *PythonDetector) inferServiceFromRequirements(dir, content, relPath stri
 		if script == "" {
 			script = "app.py"
 		}
+		cmd := fmt.Sprintf("python %s", script)
+		projectDir := dir
+		resolvedPort := resolvePort(
+			extractPortFromScript(cmd),
+			extractPortFromEnv(projectDir),
+			7860,
+		)
 		svc = &config.Service{
 			Name:         name,
-			StartCommand: fmt.Sprintf("python %s", script),
-			Port:         7860,
+			StartCommand: cmd,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:7860",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		}
 	}

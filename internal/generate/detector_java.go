@@ -1,6 +1,7 @@
 package generate
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -18,13 +19,18 @@ func (d *JavaDetector) Detect(projectDir string, result *ScanResult) error {
 		result.Findings = append(result.Findings, "Found pom.xml → Java project (Maven)")
 		result.addRuntime("java", "21")
 		result.addPackageManager("maven", ".")
+		resolvedPort := resolvePort(
+			extractPortFromSpringConfig(projectDir),
+			extractPortFromEnv(projectDir),
+			8080,
+		)
 		result.addService(config.Service{
 			Name:         "app",
 			StartCommand: "mvn spring-boot:run",
-			Port:         8080,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:8080",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		})
 		return nil
@@ -34,13 +40,18 @@ func (d *JavaDetector) Detect(projectDir string, result *ScanResult) error {
 		result.Findings = append(result.Findings, "Found build.gradle → Java project (Gradle)")
 		result.addRuntime("java", "21")
 		result.addPackageManager("gradle", ".")
+		resolvedPort := resolvePort(
+			extractPortFromSpringConfig(projectDir),
+			extractPortFromEnv(projectDir),
+			8080,
+		)
 		result.addService(config.Service{
 			Name:         "app",
 			StartCommand: "./gradlew bootRun",
-			Port:         8080,
+			Port:         resolvedPort,
 			HealthCheck: &config.ServiceHealth{
 				Type:   "http",
-				Target: "http://localhost:8080",
+				Target: fmt.Sprintf("http://localhost:%d", resolvedPort),
 			},
 		})
 		return nil
